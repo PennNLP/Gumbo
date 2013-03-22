@@ -1,0 +1,20 @@
+<package>
+  <description brief="controller_handlers">
+
+    Handlers for connecting to a high-level controller.
+
+  </description>
+  <author>Constantine Lignos</author>
+  <license>GPL v3</license>
+  <review status="unreviewed" notes=""/>
+  <url>https://github.com/PennNLP/Gumbo</url>
+  <depend package="rospy"/>
+  <depend package="actionlib"/>
+  <depend package="geometry_msgs"/>
+
+  <depend package="controller"/>
+  <depend package="subtle_msgs"/>
+  <depend package="robot_actions"/>
+</package>
+
+
