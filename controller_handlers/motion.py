@@ -72,10 +72,10 @@ def _room_to_center(room, topo_map):
     return None
 
 
-class MotionHandler(object):
+class motionControlHandler(object):
     """Send drive commands using MotionController."""
 
-    def __init__(self):
+    def __init__(self, proj, shared_data):
         self._name = type(self).__name__
         self._controller = MotionController()
         self._next_region = None
