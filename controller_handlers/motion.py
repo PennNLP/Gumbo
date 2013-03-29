@@ -13,17 +13,15 @@ from robot_actions.msg import DriveToAction, DriveToGoal
 from subtle_msgs.srv import GetTopoMap
 
 
-HANDLER_NAME = 'MotionHandler'
-CONTROLLER_NAME = 'MotionController'
-NODE_NAME = 'motion_controller'
-LOCATION_TOPIC = 'location'
-
-
-class MotionController:
+class MotionController(object):
     """Send movement messages to the robot controller."""
 
+    NODE_NAME = 'motion_controller'
+    LOCATION_TOPIC = 'location'
+
     def __init__(self):
-        rospy.init_node(NODE_NAME)
+        self._name = type(self).__name__
+        rospy.init_node(self.NODE_NAME)
 
         # Get the map
         rospy.wait_for_service('/getTopoMap')
@@ -31,16 +29,16 @@ class MotionController:
         self.map = get_topo_map().topo_map
 
         # Get a client for driving
-        self.drive_client = \
+        self._drive_client = \
             actionlib.SimpleActionClient('drive_to', DriveToAction)
-        self.drive_client.wait_for_server(rospy.Duration(5.0))
+        self._drive_client.wait_for_server(rospy.Duration(5.0))
 
         # Initialize location and lock
-        self.location = None
-        self.location_lock = Lock()
+        self._location = None
+        self._location_lock = Lock()
 
         # Subscribe to location updates
-        rospy.Subscriber(LOCATION_TOPIC, String, self.set_location)
+        rospy.Subscriber(self.LOCATION_TOPIC, String, self.set_location)
 
     def send_move_command(self, room):
         """Move to the given room, returning whether the room exists."""
@@ -51,19 +49,19 @@ class MotionController:
         # Send the request
         goal = DriveToGoal()
         goal.target_pose = Pose(position=target_position)
-        self.drive_client.send_goal(goal)
-        print "{}: Moving robot to {!r}.".format(CONTROLLER_NAME, room)
+        self._drive_client.send_goal(goal)
+        print "{}: Moving robot to {!r}.".format(self._name, room)
         return True
 
     def get_location(self):
         """Return the room the robot is currently in."""
-        with self.location_lock:
-            return self.location
+        with self._location_lock:
+            return self._location
 
     def set_location(self, msg):
         """Set the location of the robot."""
-        with self.location_lock:
-            self.location = msg.data
+        with self._location_lock:
+            self._location = msg.data
 
 
 def _room_to_center(room, topo_map):
@@ -74,25 +72,26 @@ def _room_to_center(room, topo_map):
     return None
 
 
-class MotionHandler:
+class MotionHandler(object):
     """Send drive commands using MotionController."""
 
     def __init__(self):
-        self.controller = MotionController()
-        self.next_region = None
+        self._name = type(self).__name__
+        self._controller = MotionController()
+        self._next_region = None
 
     def gotoRegion(self, current_region, next_region):
         """Try to drive to next_region, return whether we have arrived."""
         if current_region == next_region:
             # Reset next_region, and report that we are there already.
-            self.next_region = None
+            self._next_region = None
             return True
-        elif self.next_region == next_region:
+        elif self._next_region == next_region:
             # We're already trying to go there. Check whether we've arrived.
             if self._at_destination():
-                self.next_region = None
+                self._next_region = None
                 print "{}: Arrived at destination {!r}.".format(
-                    CONTROLLER_NAME, next_region)
+                    self._name, next_region)
                 return True
             else:
                 return False
@@ -102,15 +101,15 @@ class MotionHandler:
                 # This should only occur in the rare case that the
                 # robot has changed regions since FSA last checked.
                 print "{}: Already at destination {!r}.".format(
-                    CONTROLLER_NAME, next_region)
+                    self._name, next_region)
                 return True
             else:
                 print "{}: Moving from {!r} to {!r}.".format(
-                    CONTROLLER_NAME, current_region, next_region)
-                self.next_region = next_region
-                self.controller.send_move_command(next_region)
+                    self._name, current_region, next_region)
+                self._next_region = next_region
+                self._controller.send_move_command(next_region)
                 return False
 
     def _at_destination(self):
         """Return whether we have reached our destination."""
-        return self.controller.get_location() == self.next_region
+        return self._controller.get_location() == self._next_region
