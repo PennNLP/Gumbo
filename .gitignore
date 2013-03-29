@@ -37,3 +37,7 @@ nosetests.xml
 # Editors
 *~
 *.swp
+
+# cmake
+.cproject
+*.cmake
