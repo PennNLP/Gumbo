@@ -15,6 +15,5 @@
   <depend package="controller"/>
   <depend package="subtle_msgs"/>
   <depend package="robot_actions"/>
+  <depend package="robot_tools"/>
 </package>
-
-
