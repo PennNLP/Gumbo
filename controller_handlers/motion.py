@@ -1,4 +1,4 @@
-"""LTLMoP motion handler for the JR platform."""
+"""Controller for LTLMoP motion handler for the JR platform."""
 
 import roslib
 roslib.load_manifest('controller_handlers')
@@ -19,9 +19,11 @@ class MotionController(object):
     NODE_NAME = 'motion_controller'
     LOCATION_TOPIC = 'location'
 
-    def __init__(self):
+    def __init__(self, init_node=False):
         self._name = type(self).__name__
-        rospy.init_node(self.NODE_NAME)
+        # Create our own node, but only if the caller requests it.
+        if init_node:
+            rospy.init_node(self.NODE_NAME)
 
         # Get the map
         rospy.wait_for_service('/getTopoMap')
@@ -70,46 +72,3 @@ def _room_to_center(room, topo_map):
         if region.name == room:
             return region.center
     return None
-
-
-class motionControlHandler(object):
-    """Send drive commands using MotionController."""
-
-    def __init__(self, proj, shared_data):
-        self._name = type(self).__name__
-        self._controller = MotionController()
-        self._next_region = None
-
-    def gotoRegion(self, current_region, next_region):
-        """Try to drive to next_region, return whether we have arrived."""
-        if current_region == next_region:
-            # Reset next_region, and report that we are there already.
-            self._next_region = None
-            return True
-        elif self._next_region == next_region:
-            # We're already trying to go there. Check whether we've arrived.
-            if self._at_destination():
-                self._next_region = None
-                print "{}: Arrived at destination {!r}.".format(
-                    self._name, next_region)
-                return True
-            else:
-                return False
-        else:
-            # Double check that we're not already there.
-            if self._at_destination():
-                # This should only occur in the rare case that the
-                # robot has changed regions since FSA last checked.
-                print "{}: Already at destination {!r}.".format(
-                    self._name, next_region)
-                return True
-            else:
-                print "{}: Moving from {!r} to {!r}.".format(
-                    self._name, current_region, next_region)
-                self._next_region = next_region
-                self._controller.send_move_command(next_region)
-                return False
-
-    def _at_destination(self):
-        """Return whether we have reached our destination."""
-        return self._controller.get_location() == self._next_region

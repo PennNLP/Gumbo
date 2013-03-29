@@ -23,17 +23,23 @@ class poseHandler:
     NODE_NAME = 'pose_controller'
     POSE_TOPIC = 'pose_publisher/pose'
 
-    def __init__(self, proj, shared_data):
+    def __init__(self, proj, shared_data, init_node=False):
         self._name = type(self).__name__
-        rospy.init_node(self.NODE_NAME)
+        # Create our own node, but only if the caller requests it.
+        if init_node:
+            rospy.init_node(self.NODE_NAME)
         rospy.Subscriber(self.POSE_TOPIC, PoseStamped, self.set_pose)
 
         # Initialize pose and lock
         self._pose = numpy.array([0, 0, 0])
         self._pose_lock = Lock()
 
-    def getPose(self):
-        """Return the last reported pose."""
+    def getPose(self, cached=True):
+        """Return the last reported pose.
+
+        The optional second argument is required by LTLMoP but we 
+        ignore it.
+        """
         with self._pose_lock:
             return self._pose
 

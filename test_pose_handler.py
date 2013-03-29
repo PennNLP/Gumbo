@@ -19,13 +19,13 @@ def display_pose(pose_handler):
     while not rospy.is_shutdown():
         pose = pose_handler.getPose()
         print "Pose:", pose
-        time.sleep(1.0)
+        time.sleep(0.05)
 
 
 def main():
     """Get rooms from the user and send the robot there."""
     print "Initializing pose handler..."
-    pose_handler = poseHandler(None, None)
+    pose_handler = poseHandler(None, None, True)
     # Sleep to make sure the node has settled
     time.sleep(3.0)
     # Kick off display thread and spin

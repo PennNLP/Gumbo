@@ -14,7 +14,7 @@ from controller_handlers.motion import MotionController
 def main():
     """Get rooms from the user and send the robot there."""
     print "Initializing motion controller..."
-    motion = MotionController()
+    motion = MotionController(True)
     # Sleep to make sure the node has settled
     time.sleep(3.0)
 
