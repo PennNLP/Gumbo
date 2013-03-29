@@ -24,6 +24,7 @@ def main():
         while True:
             room = raw_input("> ").strip()
             if not room:
+                print "The robot is in {!r}.".format(motion.get_location())
                 continue
 
             # Send the command out
