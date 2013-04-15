@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """LTLMoP pose handler for the JR platform.
 
 Before using this, run:
