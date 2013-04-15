@@ -12,8 +12,6 @@
   <depend package="actionlib"/>
   <depend package="geometry_msgs"/>
 
-  <depend package="controller"/>
-  <depend package="subtle_msgs"/>
-  <depend package="robot_actions"/>
+  <depend package="subtle_launch"/>
   <depend package="robot_tools"/>
 </package>
