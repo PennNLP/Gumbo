@@ -32,7 +32,7 @@ class sensorHandler:
     NODE_NAME = 'sensor_controller'
     SENSOR_TOPIC = 'fiducial_scan'
 
-    def __init__(self, proj, shared_data, init_node=False):
+    def __init__(self, proj, shared_data, init_node=False):  # pylint: disable=W0613
         self._name = type(self).__name__
         # Create our own node, but only if the caller requests it.
         if init_node:

@@ -24,7 +24,7 @@ class poseHandler:
     POSE_TOPIC = 'pose_publisher/pose'
     LOCATION_TOPIC = 'location'
 
-    def __init__(self, proj, shared_data, init_node=False):
+    def __init__(self, proj, shared_data, init_node=False):  # pylint: disable=W0613
         self._name = type(self).__name__
         # Create our own node, but only if the caller requests it.
         if init_node:
@@ -42,7 +42,7 @@ class poseHandler:
         rospy.Subscriber(self.POSE_TOPIC, PoseStamped, self.set_pose)
         rospy.Subscriber(self.LOCATION_TOPIC, String, self.set_location)
 
-    def getPose(self, cached=True):
+    def getPose(self, cached=True):  # pylint: disable=W0613
         """Return the last reported pose.
 
         The optional second argument is required by LTLMoP but we 

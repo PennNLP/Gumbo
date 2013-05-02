@@ -10,7 +10,7 @@ class gumboInitHandler:
 
     NODE_NAME = "gumbo_controller"
 
-    def __init__(self, proj):
+    def __init__(self, proj):  # pylint: disable=W0613
         rospy.init_node(self.NODE_NAME)
 
     def getSharedData(self):

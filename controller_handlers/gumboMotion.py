@@ -6,7 +6,7 @@ from pose import poseHandler
 class motionControlHandler(object):
     """Send drive commands using MotionController."""
 
-    def __init__(self, proj, shared_data, init_node=False):
+    def __init__(self, proj, shared_data, init_node=False): # pylint: disable=W0613
         self._name = type(self).__name__
         self._controller = MotionController(init_node)
         self._next_region = None
