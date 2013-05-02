@@ -1,12 +1,12 @@
 """LTLMoP motion handler for the JR platform."""
 
 from motion import MotionController
-from pose import poseHandler
+
 
 class motionControlHandler(object):
     """Send drive commands using MotionController."""
 
-    def __init__(self, proj, shared_data, init_node=False): # pylint: disable=W0613
+    def __init__(self, proj, shared_data, init_node=False):  # pylint: disable=W0613
         self._name = type(self).__name__
         self._controller = MotionController(init_node)
         self._next_region = None
@@ -48,7 +48,7 @@ class motionControlHandler(object):
                 found_region = self._controller.send_move_command(next_region)
                 if not found_region:
                     print "{}: Cannot find region {!r}.".format(
-                    self._name, next_region)
+                        self._name, next_region)
                 return False
 
     def _at_destination(self):
