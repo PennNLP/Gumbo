@@ -1,7 +1,7 @@
 """LTLMoP motion handler for the JR platform."""
 
 from motion import MotionController
-
+from pose import poseHandler
 
 class motionControlHandler(object):
     """Send drive commands using MotionController."""
@@ -11,6 +11,7 @@ class motionControlHandler(object):
         self._controller = MotionController(init_node)
         self._next_region = None
         self._regions = proj.rfi.regions
+        self._handlers = proj.h_instance
 
     def gotoRegion(self, current_region, next_region):
         """Try to drive to next_region, return whether we have arrived."""
@@ -52,4 +53,8 @@ class motionControlHandler(object):
 
     def _at_destination(self):
         """Return whether we have reached our destination."""
-        return self._controller.get_location() == self._next_region
+        return self._get_location() == self._next_region
+
+    def _get_location(self):
+        """Return the current region."""
+        return self._handlers['pose'].get_location()

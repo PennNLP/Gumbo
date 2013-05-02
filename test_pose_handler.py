@@ -8,6 +8,7 @@ roslaunch controller run.launch
 
 import time
 import threading
+import sys
 
 import rospy
 
@@ -16,10 +17,13 @@ from controller_handlers.pose import poseHandler
 
 def display_pose(pose_handler):
     """Print the current pose periodically."""
+    print "",
     while not rospy.is_shutdown():
         pose = pose_handler.getPose()
-        print "Pose:", pose
-        time.sleep(0.05)
+        location = pose_handler.get_location()
+        print "\rLocation: {}, Pose: {}".format(location, pose),
+        sys.stdout.flush()
+        time.sleep(1.0)
 
 
 def main():
