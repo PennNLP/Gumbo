@@ -3,7 +3,12 @@
 import roslib
 roslib.load_manifest('controller_handlers')
 import rospy
+import logging
 
+# Hack to keep rospy from hijacking LTLMoP's logger
+h = next((h for h in logging.getLogger().handlers if h.__class__.__name__ == 'RosStreamHandler'), None)
+if h:
+    logging.getLogger().removeHandler(h)
 
 class gumboInitHandler:
     """Initialize a ROS node for the other handlers."""
