@@ -14,6 +14,9 @@ class gumboActuatorHandler(object):
     NODE_NAME = 'actuator_controller'
 
     def __init__(self, init_node=False):
+        """
+        init_node (bool): create separate ROS node (default: False)
+        """
         self._name = type(self).__name__
 
         # Create our own node, but only if the caller requests it.
