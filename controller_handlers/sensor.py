@@ -2,7 +2,6 @@
 
 Before using this, run:
 roslaunch subtle_launch static-sim.launch
-roslaunch controller run.launch
 
 Mappings currently in use are from subtle_launch/launch/main.lauch:
       <rosparam param="id2name">
