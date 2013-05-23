@@ -24,12 +24,16 @@ from threading import Lock
 
 from fiducial_msgs.msg import FiducialScanStamped
 
+import re
+
 
 class sensorHandler:
     """Report the robot's current sensor status."""
 
     NODE_NAME = 'sensor_controller'
     SENSOR_TOPIC = 'fiducial_scan'
+
+    # TODO: Deactivate bombs on defusing
 
     def __init__(self, proj, shared_data, init_node=False):  # pylint: disable=W0613
         """
@@ -43,30 +47,47 @@ class sensorHandler:
         rospy.Subscriber(self.SENSOR_TOPIC, FiducialScanStamped,
                          self._set_sensors)
 
-        # Initialize lock and current objects sensed
+        # Store reference to pose handler
+        self._pose_handler = proj.h_instance['pose']
+
+        # Initialize lock, current objects sensed, and list of objects to ignore
+        self._disabled_items = set()
         self._currently_sensed = set()
         self._sensor_lock = Lock()
 
+        self._last_region = None  # keep track of region we were in when last polled
+
     def _set_sensors(self, msg):
         """Reads current sensor status from the robot."""
+
+        # Note: This callback is only triggered when something is being seen
+
         with self._sensor_lock:
-            # TODO: Rather than clearing the set every time, we
-            # need to clear it if the region has changed but keep
-            # things in there if the region hasn't since last update.
-            # TODO: Deactivate bombs on defusing
-            self._currently_sensed = set(fid.id for fid in msg.scan.fiducials)
+            # We accumulate here because we want to Persist objects within a region
+            self._currently_sensed |= set(fid.id for fid in msg.scan.fiducials)
 
     def get_sensor(self, sensor_name, initial=False):
         """Report whether we currently see a fiducial of the requested type.
 
         sensor_name (string): The type of the fiducial to query.
         """
+        current_region = self._pose_handler.get_location()
+
         with self._sensor_lock:
             if initial:
+                self._last_region = current_region
                 # initialize landmark detection
                 return True
             else:
-                return sensor_name in self._currently_sensed
+                if current_region != self._last_region:
+                    # We've entered a new region since the last poll;
+                    # reset our accumulated list of sensed objects
+                    self._currently_sensed = set([])
+                    self._last_region = current_region
+
+                # Ignore the specific ID numbers at the end of fiducial IDs
+                return any((re.match(re.escape(sensor_name) + "\\d*$", sname) for sname in \
+                            self._currently_sensed - self._disabled_items))
 
     def _get_all_sensors(self):
         """Return all types currently seen.
