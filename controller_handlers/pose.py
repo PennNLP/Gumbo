@@ -25,6 +25,10 @@ class poseHandler:
     LOCATION_TOPIC = 'location'
 
     def __init__(self, proj, shared_data, init_node=False):  # pylint: disable=W0613
+        """
+        init_node (bool): create separate ROS node (default: False)
+        """
+    
         self._name = type(self).__name__
         # Create our own node, but only if the caller requests it.
         if init_node:

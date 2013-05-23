@@ -2,11 +2,14 @@
 
 from motion import MotionController
 
-
 class motionControlHandler(object):
     """Send drive commands using MotionController."""
 
     def __init__(self, proj, shared_data, init_node=False):  # pylint: disable=W0613
+        """
+        init_node (bool): create separate ROS node (default: False)
+        """
+
         self._name = type(self).__name__
         self._controller = MotionController(init_node)
         self._next_region = None
