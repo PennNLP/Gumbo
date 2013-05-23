@@ -11,17 +11,8 @@ from robot_actions.msg import SweepAreaAction
 class gumboActuatorHandler(object):
     """Send actuation commands to the robot."""
 
-    NODE_NAME = 'actuator_controller'
-
-    def __init__(self, init_node=False):
-        """
-        init_node (bool): create separate ROS node (default: False)
-        """
+    def __init__(self):
         self._name = type(self).__name__
-
-        # Create our own node, but only if the caller requests it.
-        if init_node:
-            rospy.init_node(self.NODE_NAME)
 
         # Get the map
         rospy.wait_for_service('/getTopoMap')
