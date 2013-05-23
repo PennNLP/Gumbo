@@ -16,3 +16,7 @@ class gumboInitHandler:
     def getSharedData(self):
         """Return a dict of objects shared with other handlers."""
         return {}
+
+    def _close(self):
+        """Shut down the ROS node."""
+        rospy.signal_shutdown("Gumbo handler is being closed.")
