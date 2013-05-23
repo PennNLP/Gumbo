@@ -21,8 +21,9 @@ class motionControlHandler(object):
         next_region = self._regions[next_region].name
 
         if current_region == next_region:
-            # Reset next_region, and report that we are there already.
-            self._next_region = None
+            # Stop the robot, which will also clear the next region
+            print "{}: Stopping robot.".format(self._name)
+            self.stop()
             return True
         elif self._next_region == next_region:
             # We're already trying to go there. Check whether we've arrived.
@@ -32,6 +33,10 @@ class motionControlHandler(object):
                     self._name, next_region)
                 return True
             else:
+                # This line should be commented for debugging only, as it will
+                # print at the refresh interval of LTLMoP, currently 20Hz
+                # print "{}: Continuing move from {!r} to {!r}.".format(
+                #    self._name, current_region, next_region)
                 return False
         else:
             # Double check that we're not already there.
@@ -50,6 +55,11 @@ class motionControlHandler(object):
                     print "{}: Cannot find region {!r}.".format(
                         self._name, next_region)
                 return False
+
+    def stop(self):
+        """Stop motion."""
+        self._next_region = None
+        self._controller.stop()
 
     def _at_destination(self):
         """Return whether we have reached our destination."""

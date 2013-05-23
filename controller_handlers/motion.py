@@ -17,6 +17,7 @@ class MotionController(object):
 
     def __init__(self, init_node=False):
         self._name = type(self).__name__
+
         # Create our own node, but only if the caller requests it.
         if init_node:
             rospy.init_node(self.NODE_NAME)
@@ -43,6 +44,11 @@ class MotionController(object):
         self._drive_client.send_goal(goal)
         print "{}: Moving robot to {!r}.".format(self._name, room)
         return True
+
+    def stop(self):
+        """Attempt to stop motion."""
+        self._drive_client.cancel_goal()
+        print "{}: Cancelled robot drive goal.".format(self._name)
 
 
 def _room_to_center(room, topo_map):
