@@ -25,7 +25,6 @@ class motionControlHandler(object):
 
         if current_region == next_region:
             # Stop the robot, which will also clear the next region
-            print "{}: Stopping robot.".format(self._name)
             self.stop()
             return True
         elif self._next_region == next_region:
@@ -61,6 +60,7 @@ class motionControlHandler(object):
 
     def stop(self):
         """Stop motion."""
+        print "{}: Stopping robot.".format(self._name)
         self._next_region = None
         self._controller.stop()
 
