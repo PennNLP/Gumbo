@@ -31,6 +31,7 @@ class MotionController(object):
         self._drive_client = \
             actionlib.SimpleActionClient('drive_to', DriveToAction)
         self._drive_client.wait_for_server(rospy.Duration(5.0))
+        self._goal_active = False
 
     def send_move_command(self, room):
         """Move to the given room, returning whether the room exists."""
@@ -42,14 +43,18 @@ class MotionController(object):
         goal = DriveToGoal()
         goal.target_pose = Pose(position=target_position)
         self._drive_client.send_goal(goal)
+        self._goal_active = True
         print "{}: Moving robot to {!r}.".format(self._name, room)
         return True
 
     def stop(self):
         """Attempt to stop motion."""
-        self._drive_client.cancel_goal()
-        print "{}: Cancelled robot drive goal.".format(self._name)
-
+        if self._goal_active:
+            self._drive_client.cancel_goal()
+            self._goal_active = False
+            print "{}: Cancelled robot drive goal.".format(self._name)
+        else:
+            print "{}: No current robot drive goal to stop.".format(self._name)
 
 def _room_to_center(room, topo_map):
     """Return the center of a room on the map."""
