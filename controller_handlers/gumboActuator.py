@@ -5,7 +5,7 @@ roslib.load_manifest('controller_handlers')
 import rospy
 
 import actionlib
-from robot_actions.msg import SweepAreaAction
+from robot_actions.msg import SweepAreaAction, SweepAreaGoal
 
 
 class gumboActuatorHandler(object):
@@ -14,11 +14,6 @@ class gumboActuatorHandler(object):
     def __init__(self):
         self._name = type(self).__name__
 
-        # Get the map
-        rospy.wait_for_service('/getTopoMap')
-        get_topo_map = rospy.ServiceProxy('getTopoMap', GetTopoMap)
-        self.map = get_topo_map().topo_map
-
         # Get a client for each action
         self._sweep_client = actionlib.SimpleActionClient('sweep_area_action', SweepAreaAction)
         self._sweep_client.wait_for_server(rospy.Duration(5.0))
@@ -26,6 +21,10 @@ class gumboActuatorHandler(object):
 
     def sweep(self, actuatorVal, initial=False):
         """Perform a search of the current room."""
+        # Normalize the actuator value if needed. It will be a string of
+        # an int if it's not a boolean, so we need to convert twice.
+        if not isinstance(actuatorVal, bool):
+            actuatorVal = bool(int(actuatorVal))
         if actuatorVal:
             print "{}: Activating sweep.".format(self._name)
             self._sweep_goal = SweepAreaGoal()
