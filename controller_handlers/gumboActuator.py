@@ -47,13 +47,23 @@ class gumboActuatorHandler(object):
             self._sweep_goal.wall_dist = 1.3
             self._sweep_goal.pattern = SweepAreaGoal.PATTERN_WALL_FOLLOW
             self._sweep_goal.args.append(SweepAreaGoal.ARG_RIGHT)
-            self._sweep_client.send_goal(self._sweep_goal)
+
+            # Set up a lexically enclosed callback for setting the _done sensor
+            def _complete_sweep(goal_status, goal_result):
+                """Set sweep_done sensor when sweep is complete."""
+                print "{}: Sweep completed with status {!r}.".format(self._name, goal_status)
+                self._sensor_handler.set_action_done("sweep", True)
+
+            self._sweep_client.send_goal(self._sweep_goal, done_cb=_complete_sweep)
             return True
         else:
             print "{}: Deactivating sweep.".format(self._name)
             if self._sweep_goal:
                 self._sweep_client.cancel_goal()
                 self._sweep_goal = None
+
+            # Reset the sweep_done sensor
+            self._sensor_handler.set_action_done("sweep", False)
             return True
 
     def defuse(self, actuatorVal, initial=False):
@@ -81,7 +91,7 @@ class gumboActuatorHandler(object):
             # Sneakily define a lexically enclosed callback
             def _complete_defuse(goal_status, goal_result):
                 """Wait until bomb is defused and then remove it from the sensors."""
-                # TODO: Look at the status/result
+                print "{}: Defuse completed with status {!r}.".format(self._name, goal_status)
                 # Wait for the robot to reach the bomb, then pretend to
                 # defuse the bomb by waiting then making it go away
                 print "{}: Defusing bomb...".format(self._name)

@@ -54,6 +54,7 @@ class sensorHandler(object):
         self._id_fiducials = dict()
         self._disabled_items = set()
         self._currently_sensed = set()
+        self._fake_sensed = set()
         self._sensor_lock = RLock()
 
         self._last_region = None  # keep track of region we were in when last polled
@@ -119,8 +120,9 @@ class sensorHandler(object):
                     self._currently_sensed = set()
                     self._last_region = current_region
 
-                # Return whether we got an item back or none
-                return self.get_sensed_item(sensor_name) is not None
+                # Return whether we have it
+                return ((sensor_name in self._fake_sensed) or 
+                        (self.get_sensed_item(sensor_name) is not None))
 
     def disable_item(self, item):
         """Disable viewing of an item."""
@@ -138,12 +140,25 @@ class sensorHandler(object):
                 return None
 
     def _get_all_sensors(self):
-        """Return all types currently seen.
+        """Return all things currently sensed.
 
         To be used for testing only.
         """
         with self._sensor_lock:
-            return list(self._currently_sensed)
+            return list(self._currently_sensed | self._fake_sensed)
+
+    def set_action_done(self, action_name, value):
+        """Set whether an action is done to the given value."""
+        sensor_name = action_name + "_done"
+        print "{}: Setting action sensor {!r} to {}.".format(self._name, sensor_name, value)
+        if value:
+            self._fake_sensed.add(sensor_name)
+        else:
+            try:
+                self._fake_sensed.remove(sensor_name)
+            except KeyError:
+                # If it's already inactive, no problem.
+                pass
 
 
 def _clean_item_id(name):
