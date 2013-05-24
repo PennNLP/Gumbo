@@ -130,11 +130,12 @@ class sensorHandler(object):
 
     def get_sensed_item(self, name):
         """Return a fiducial matching a name, None if there is no match."""
-        for item in self._currently_sensed - self._disabled_items:
-            if _clean_item_id(item) == name:
-                return self._id_fiducials[item]
-        else:
-            return None
+        with self._sensor_lock:
+            for item in self._currently_sensed - self._disabled_items:
+                if _clean_item_id(item) == name:
+                    return self._id_fiducials[item]
+            else:
+                return None
 
     def _get_all_sensors(self):
         """Return all types currently seen.
