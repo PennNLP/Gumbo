@@ -79,11 +79,12 @@ class sensorHandler(object):
                         print "{}: Adding {!r} to sensed items.".format(self._name, fid.id)
                     self._currently_sensed.add(fid.id)
         
-                    # Tell the simulation GUI to show this fiducial on the map
-                    position = fid.pose.position
-                    raw_pose = numpy.array([position.x, position.y, position.z])
-                    pose = self._proj.coordmap_lab2map(raw_pose)
-                    self._proj.executor.postEvent("FID", [fid.id, pose[0], pose[1]])
+                    if fid.id not in self._disabled_items:
+                        # Tell the simulation GUI to show this fiducial on the map
+                        position = fid.pose.position
+                        raw_pose = numpy.array([position.x, position.y, position.z])
+                        pose = self._proj.coordmap_lab2map(raw_pose)
+                        self._proj.executor.postEvent("FID", [fid.id, pose[0], pose[1]])
     
     def _fid_in_region(self, fid, current_region):
         """Return whether a fiducial is in the current region."""
@@ -128,6 +129,9 @@ class sensorHandler(object):
         with self._sensor_lock:
             print "{}: Disabling sensing item {!r}.".format(self._name, item.id)
             self._disabled_items.add(item.id)
+
+            # Let the GUI know to hide it
+            self._proj.executor.postEvent("FID", [item.id, None])
 
     def get_sensed_item(self, name):
         """Return a fiducial matching a name, None if there is no match."""
