@@ -4,6 +4,7 @@ import roslib
 roslib.load_manifest('controller_handlers')
 import rospy
 import logging
+import globalConfig
 
 # Hack to keep rospy from hijacking LTLMoP's logger
 h = next((h for h in logging.getLogger().handlers if h.__class__.__name__ == 'RosStreamHandler'), None)
@@ -17,6 +18,9 @@ class gumboInitHandler:
 
     def __init__(self, proj):  # pylint: disable=W0613
         rospy.init_node(self.NODE_NAME)
+
+        # Fight aggressively against ROS logger
+        globalConfig.setupLogging()
 
     def getSharedData(self):
         """Return a dict of objects shared with other handlers."""
