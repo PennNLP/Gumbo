@@ -13,6 +13,8 @@ from robot_actions.msg import SweepAreaAction, SweepAreaGoal, DriveToAction, Dri
 
 # Time it takes to defuse a bomb, in seconds
 DEFUSE_TIME = 5.0
+# Wall distance for sweep
+SWEEP_WALL_DISTANCE = 1.3
 
 
 class gumboActuatorHandler(object):
@@ -43,8 +45,8 @@ class gumboActuatorHandler(object):
         if actuatorVal:
             print "{}: Activating sweep.".format(self._name)
             self._sweep_goal = SweepAreaGoal()
-            self._sweep_goal.timeout = 150.0
-            self._sweep_goal.wall_dist = 1.3
+            self._sweep_goal.timeout = 0.0  # Never timeout
+            self._sweep_goal.wall_dist = SWEEP_WALL_DISTANCE
             self._sweep_goal.pattern = SweepAreaGoal.PATTERN_WALL_FOLLOW
             self._sweep_goal.args.append(SweepAreaGoal.ARG_RIGHT)
 
