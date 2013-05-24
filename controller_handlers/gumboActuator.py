@@ -5,7 +5,6 @@ roslib.load_manifest('controller_handlers')
 import rospy
 
 import sys
-import time
 
 import actionlib
 from geometry_msgs.msg import Pose
@@ -16,7 +15,7 @@ from robot_actions.msg import SweepAreaAction, SweepAreaGoal, DriveToAction, Dri
 # TODO: Get this dynamically from LTLMoP
 ROBOT_NAME = "ATRV_JR"
 # Time it takes to defuse a bomb, in seconds
-DEFUSE_TIME = 3.0
+DEFUSE_TIME = 5.0
 
 
 class gumboActuatorHandler(object):
@@ -72,19 +71,26 @@ class gumboActuatorHandler(object):
             self._defuse_goal = DriveToGoal()
             bomb_position = bomb.pose.position
             self._defuse_goal.target_pose = Pose(position=bomb_position)
-            self._defuse_client.send_goal(self._defuse_goal)
-            print "{}: Defusing bomb at ({}, {}).".format(self._name, bomb_position.x,
-                                                          bomb_position.y)
 
-            # Pretend to defuse the bomb by waiting then making it go away
-            time.sleep(DEFUSE_TIME)
-            self._sensor_handler.disable_item(bomb)
-            print "{}: Bomb defusing complete.".format(self._name)
+            # Sneakily define a lexically enclosed callback
+            def _complete_defuse(goal_status, goal_result):
+                """Wait until bomb is defused and then remove it from the sensors."""
+                # TODO: Look at the status/result
+                # Wait for the robot to reach the bomb, then pretend to
+                # defuse the bomb by waiting then making it go away
+                print "{}: Defusing bomb...".format(self._name)
+                rospy.sleep(DEFUSE_TIME)
+                print "{}: Bomb defusing complete.".format(self._name)
+                self._sensor_handler.disable_item(bomb)
+
+            self._defuse_client.send_goal(self._defuse_goal, done_cb=_complete_defuse)
+            print "{}: Moving to bomb at ({}, {}).".format(self._name, bomb_position.x,
+                                                          bomb_position.y)
         else:
             print "{}: Deactivating defuse.".format(self._name)
             if self._defuse_goal:
                 self._defuse_client.cancel_goal()
-                self._defuse_goal = None            
+                self._defuse_goal = None
 
 
 def _normalize(value):

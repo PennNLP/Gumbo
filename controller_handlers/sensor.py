@@ -20,11 +20,12 @@ import roslib
 roslib.load_manifest('controller_handlers')
 import rospy
 
+import re
 from threading import Lock
 
-from fiducial_msgs.msg import FiducialScanStamped
+import numpy
 
-import re
+from fiducial_msgs.msg import FiducialScanStamped
 
 
 class sensorHandler(object):
@@ -45,10 +46,12 @@ class sensorHandler(object):
         rospy.Subscriber(self.SENSOR_TOPIC, FiducialScanStamped,
                          self._set_sensors)
 
-        # Store reference to pose handler
+        # Store reference to proj and pose handler
         self._pose_handler = proj.h_instance['pose']
+        self._proj = proj
 
         # Initialize lock, current objects sensed, and list of objects to ignore
+        self._id_fiducials = dict()
         self._disabled_items = set()
         self._currently_sensed = set()
         self._sensor_lock = Lock()
@@ -57,13 +60,37 @@ class sensorHandler(object):
 
     def _set_sensors(self, msg):
         """Reads current sensor status from the robot."""
-
         # Note: This callback is only triggered when something is being seen
-
         with self._sensor_lock:
+            # Treat our last updated region as the current one, even if it's slightly
+            # out-of-date. If we query a fresh location, we might just add fids
+            # that will be deleted at an imminent boundary
+            current_region = self._last_region
+
             # We accumulate here because we want to persist objects within a region
-            # TODO: Filter out fiducials not in the current region
-            self._currently_sensed |= set(fid for fid in msg.scan.fiducials)
+            for fid in msg.scan.fiducials:
+                # Keep a dict of all the fiducials we know about
+                self._id_fiducials[fid.id] = fid
+
+                # Check if the fid is in the current region
+                if self._fid_in_region(fid, current_region):
+                    if fid.id not in self._currently_sensed:
+                        print "{}: Adding {!r} to sensed items.".format(self._name, fid.id)
+                    self._currently_sensed.add(fid.id)
+    
+    def _fid_in_region(self, fid, current_region):
+        """Return whether a fiducial is in the current region."""
+        position = fid.pose.position
+        raw_pose = numpy.array([position.x, position.y, position.z])
+        pose = self._proj.coordmap_lab2map(raw_pose)
+        fid_regions = [region for region in self._proj.rfi.regions if
+                       region.name.lower() != "boundary" and region.objectContainsPoint(*pose)]
+        if fid_regions:
+            fid_region = fid_regions[0].name
+            return fid_region == current_region
+        else:
+            # Hopefully, we should not hit this case
+            return False
 
     def get_sensor(self, sensor_name, initial=False):
         """Report whether we currently see a fiducial of the requested type.
@@ -92,13 +119,13 @@ class sensorHandler(object):
         """Disable viewing of an item."""
         with self._sensor_lock:
             print "{}: Disabling sensing item {!r}.".format(self._name, item.id)
-            self._disabled_items.add(item)
+            self._disabled_items.add(item.id)
 
     def get_sensed_item(self, name):
-        """Return an item matching a name, None if there is no match."""
+        """Return a fiducial matching a name, None if there is no match."""
         for item in self._currently_sensed - self._disabled_items:
-            if name == _clean_item_id(item.id):
-                return item
+            if _clean_item_id(item) == name:
+                return self._id_fiducials[item]
         else:
             return None
 
