@@ -11,9 +11,6 @@ from geometry_msgs.msg import Pose
 from robot_actions.msg import SweepAreaAction, SweepAreaGoal, DriveToAction, DriveToGoal
 
 
-# Robot name
-# TODO: Get this dynamically from LTLMoP
-ROBOT_NAME = "ATRV_JR"
 # Time it takes to defuse a bomb, in seconds
 DEFUSE_TIME = 5.0
 
@@ -23,24 +20,26 @@ class gumboActuatorHandler(object):
 
     def __init__(self, proj, shared_data):  # pylint: disable=W0613
         self._name = type(self).__name__
-        self._sensor_handler = proj.h_instance['sensor'][ROBOT_NAME]
+        self._sensor_handler = proj.h_instance['sensor'][proj.currentConfig.main_robot]
 
-        # Get a client for each action
         # Sweep
-        self._sweep_client = actionlib.SimpleActionClient('sweep_area_action', SweepAreaAction)
-        self._sweep_client.wait_for_server(rospy.Duration(5.0))
+        self._sweep_client = None
         self._sweep_goal = None
 
         # Defuse
-        self._defuse_client = actionlib.SimpleActionClient('drive_to', DriveToAction)
-        self._defuse_client.wait_for_server(rospy.Duration(5.0))
+        self._defuse_client = None
         self._defuse_goal = None
 
     def sweep(self, actuatorVal, initial=False):
         """Perform a search of the current room."""
-        actuatorVal = _normalize(actuatorVal)
+        # Create action client
+        if initial:
+            self._sweep_client = actionlib.SimpleActionClient('sweep_area_action', SweepAreaAction)
+            self._sweep_client.wait_for_server(rospy.Duration(5.0))
+            return True
 
         # Activate or deactivate sweep
+        actuatorVal = _normalize(actuatorVal)
         if actuatorVal:
             print "{}: Activating sweep.".format(self._name)
             self._sweep_goal = SweepAreaGoal()
@@ -49,23 +48,30 @@ class gumboActuatorHandler(object):
             self._sweep_goal.pattern = SweepAreaGoal.PATTERN_WALL_FOLLOW
             self._sweep_goal.args.append(SweepAreaGoal.ARG_RIGHT)
             self._sweep_client.send_goal(self._sweep_goal)
+            return True
         else:
             print "{}: Deactivating sweep.".format(self._name)
             if self._sweep_goal:
                 self._sweep_client.cancel_goal()
                 self._sweep_goal = None
+            return True
 
     def defuse(self, actuatorVal, initial=False):
         """Defuse a bomb by driving to it and making it disappear."""
-        actuatorVal = _normalize(actuatorVal)
-        
+        # Create action client
+        if initial:
+            self._defuse_client = actionlib.SimpleActionClient('drive_to', DriveToAction)
+            self._defuse_client.wait_for_server(rospy.Duration(5.0))
+            return True
+
         # Activate or deactivate defuse
+        actuatorVal = _normalize(actuatorVal)
         if actuatorVal:
             # Get the bomb from the sensors
             bomb = self._sensor_handler.get_sensed_item("bomb")
             if not bomb:
                 print >> sys.stderr, "{}: Defuse requested but no bomb found.".format(self._name)
-                return
+                return False
 
             # Move the robot to the bomb
             self._defuse_goal = DriveToGoal()
@@ -86,11 +92,13 @@ class gumboActuatorHandler(object):
             self._defuse_client.send_goal(self._defuse_goal, done_cb=_complete_defuse)
             print "{}: Moving to bomb at ({}, {}).".format(self._name, bomb_position.x,
                                                           bomb_position.y)
+            return True
         else:
             print "{}: Deactivating defuse.".format(self._name)
             if self._defuse_goal:
                 self._defuse_client.cancel_goal()
                 self._defuse_goal = None
+            return True
 
 
 def _normalize(value):
