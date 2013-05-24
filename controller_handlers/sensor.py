@@ -27,13 +27,11 @@ from fiducial_msgs.msg import FiducialScanStamped
 import re
 
 
-class sensorHandler:
+class sensorHandler(object):
     """Report the robot's current sensor status."""
 
     NODE_NAME = 'sensor_controller'
     SENSOR_TOPIC = 'fiducial_scan'
-
-    # TODO: Deactivate bombs on defusing
 
     def __init__(self, proj, shared_data, init_node=False):  # pylint: disable=W0613
         """
@@ -63,8 +61,9 @@ class sensorHandler:
         # Note: This callback is only triggered when something is being seen
 
         with self._sensor_lock:
-            # We accumulate here because we want to Persist objects within a region
-            self._currently_sensed |= set(fid.id for fid in msg.scan.fiducials)
+            # We accumulate here because we want to persist objects within a region
+            # TODO: Filter out fiducials not in the current region
+            self._currently_sensed |= set(fid for fid in msg.scan.fiducials)
 
     def get_sensor(self, sensor_name, initial=False):
         """Report whether we currently see a fiducial of the requested type.
@@ -82,12 +81,26 @@ class sensorHandler:
                 if current_region != self._last_region:
                     # We've entered a new region since the last poll;
                     # reset our accumulated list of sensed objects
-                    self._currently_sensed = set([])
+                    print "{}: Resetting sensors on region change.".format(self._name)
+                    self._currently_sensed = set()
                     self._last_region = current_region
 
-                # Ignore the specific ID numbers at the end of fiducial IDs
-                return any((re.match(re.escape(sensor_name) + "\\d*$", sname) for sname in \
-                            self._currently_sensed - self._disabled_items))
+                # Return whether we got an item back or none
+                return self.get_sensed_item(sensor_name) is not None
+
+    def disable_item(self, item):
+        """Disable viewing of an item."""
+        with self._sensor_lock:
+            print "{}: Disabling sensing item {!r}.".format(self._name, item.id)
+            self._disabled_items.add(item)
+
+    def get_sensed_item(self, name):
+        """Return an item matching a name, None if there is no match."""
+        for item in self._currently_sensed - self._disabled_items:
+            if name == _clean_item_id(item.id):
+                return item
+        else:
+            return None
 
     def _get_all_sensors(self):
         """Return all types currently seen.
@@ -96,3 +109,8 @@ class sensorHandler:
         """
         with self._sensor_lock:
             return list(self._currently_sensed)
+
+
+def _clean_item_id(name):
+    """Clean off any trailing numbers from an item's name."""
+    return re.sub(r"\d+$", "", name)
