@@ -60,7 +60,7 @@ class motionControlHandler(object):
 
     def stop(self):
         """Stop motion."""
-        print "{}: Motion stop requested.".format(self._name)
+        # Controller's stop will print a message if we are actually stopping.
         self._next_region = None
         self._controller.stop()
 
