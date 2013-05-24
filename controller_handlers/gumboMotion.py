@@ -60,7 +60,7 @@ class motionControlHandler(object):
 
     def stop(self):
         """Stop motion."""
-        print "{}: Stopping robot.".format(self._name)
+        print "{}: Motion stop requested.".format(self._name)
         self._next_region = None
         self._controller.stop()
 
