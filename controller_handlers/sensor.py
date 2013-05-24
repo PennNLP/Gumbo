@@ -21,7 +21,7 @@ roslib.load_manifest('controller_handlers')
 import rospy
 
 import re
-from threading import Lock
+from threading import RLock
 
 import numpy
 
@@ -54,7 +54,7 @@ class sensorHandler(object):
         self._id_fiducials = dict()
         self._disabled_items = set()
         self._currently_sensed = set()
-        self._sensor_lock = Lock()
+        self._sensor_lock = RLock()
 
         self._last_region = None  # keep track of region we were in when last polled
 
