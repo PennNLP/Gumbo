@@ -77,6 +77,13 @@ class sensorHandler(object):
                     if fid.id not in self._currently_sensed:
                         print "{}: Adding {!r} to sensed items.".format(self._name, fid.id)
                     self._currently_sensed.add(fid.id)
+        
+        # Tell the simgui to show this fiducial on the map
+        # TODO: Should we assume static pose and not send every time?)
+        position = fid.pose.position
+        raw_pose = numpy.array([position.x, position.y, position.z])
+        pose = self._proj.coordmap_lab2map(raw_pose)
+        self._proj.executor.postEvent("FID", [fid.id, pose[0], pose[1]])
     
     def _fid_in_region(self, fid, current_region):
         """Return whether a fiducial is in the current region."""
