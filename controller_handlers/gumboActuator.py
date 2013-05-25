@@ -7,6 +7,7 @@ import rospy
 import sys
 
 import actionlib
+from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import Pose
 from robot_actions.msg import SweepAreaAction, SweepAreaGoal, DriveToAction, DriveToGoal
 
@@ -51,10 +52,13 @@ class gumboActuatorHandler(object):
             self._sweep_goal.args.append(SweepAreaGoal.ARG_RIGHT)
 
             # Set up a lexically enclosed callback for setting the _done sensor
-            def _complete_sweep(goal_status, goal_result):
+            def _complete_sweep(goal_status, goal_result):  # pylint: disable=W0613
                 """Set sweep_done sensor when sweep is complete."""
-                print "{}: Sweep completed with status {!r}.".format(self._name, goal_status)
-                self._sensor_handler.set_action_done("sweep", True)
+                if goal_status == GoalStatus.SUCCEEDED:
+                    print "{}: Sweep succeeded.".format(self._name)
+                    self._sensor_handler.set_action_done("sweep", True)
+                else:
+                    print "{}: Sweep failed with status {!r}.".format(self._name, goal_status)
 
             self._sweep_client.send_goal(self._sweep_goal, done_cb=_complete_sweep)
             return True
@@ -91,15 +95,17 @@ class gumboActuatorHandler(object):
             self._defuse_goal.target_pose = Pose(position=bomb_position)
 
             # Sneakily define a lexically enclosed callback
-            def _complete_defuse(goal_status, goal_result):
+            def _complete_defuse(goal_status, goal_result):  # pylint: disable=W0613
                 """Wait until bomb is defused and then remove it from the sensors."""
-                print "{}: Defuse completed with status {!r}.".format(self._name, goal_status)
-                # Wait for the robot to reach the bomb, then pretend to
-                # defuse the bomb by waiting then making it go away
-                print "{}: Defusing bomb...".format(self._name)
-                rospy.sleep(DEFUSE_TIME)
-                print "{}: Bomb defusing complete.".format(self._name)
-                self._sensor_handler.disable_item(bomb)
+                if goal_status == GoalStatus.SUCCEEDED:
+                    # After the robot reaches the bomb, defuse the
+                    # bomb by waiting and then make it go away.
+                    print "{}: Defusing bomb...".format(self._name)
+                    rospy.sleep(DEFUSE_TIME)
+                    print "{}: Bomb defusing complete.".format(self._name)
+                    self._sensor_handler.disable_item(bomb)
+                else:
+                    print "{}: Defuse failed with status {!r}.".format(self._name, goal_status)
 
             self._defuse_client.send_goal(self._defuse_goal, done_cb=_complete_defuse)
             print "{}: Moving to bomb at ({}, {}).".format(self._name, bomb_position.x,
