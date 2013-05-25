@@ -11,6 +11,7 @@
   <depend package="rospy"/>
   <depend package="actionlib"/>
   <depend package="geometry_msgs"/>
+  <depend package="tf"/>
 
   <depend package="subtle_launch"/>
   <depend package="robot_tools"/>

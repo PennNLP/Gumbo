@@ -16,6 +16,7 @@ import numpy
 from std_msgs.msg import String
 from geometry_msgs.msg import PoseStamped
 
+from tf.transformations import euler_from_quaternion
 
 class poseHandler:
     """Report the robot's current pose."""
@@ -59,7 +60,9 @@ class poseHandler:
         """Store the reported pose."""
         with self._pose_lock:
             position = msg.pose.position
-            self._pose = numpy.array([position.x, position.y, position.z])
+            o = msg.pose.orientation # quaternion
+            yaw = euler_from_quaternion([o.x, o.y, o.z, o.w])[2]
+            self._pose = numpy.array([position.x, position.y, yaw])
 
     def get_location(self):
         """Return the room the robot is currently in."""
