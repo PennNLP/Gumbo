@@ -67,5 +67,5 @@ rfi.writeFile(output_filename)
 print "Wrote to '{}'.".format(output_filename)
 
 print "The calculated calibration matrix is: "
-print T
+print repr(T)
 print "You can just squirrel this into the appropriate .config file"
