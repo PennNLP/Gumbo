@@ -57,6 +57,8 @@ class gumboActuatorHandler(object):
                 if goal_status == GoalStatus.SUCCEEDED:
                     print "{}: Sweep succeeded.".format(self._name)
                     self._sensor_handler.set_action_done("sweep", True)
+                elif goal_status == GoalStatus.PREEMPTED:
+                    print "{}: Sweep cancelled before completion.".format(self._name)
                 else:
                     print "{}: Sweep failed with status {!r}.".format(self._name, goal_status)
 
@@ -104,6 +106,8 @@ class gumboActuatorHandler(object):
                     rospy.sleep(DEFUSE_TIME)
                     print "{}: Bomb defusing complete.".format(self._name)
                     self._sensor_handler.disable_item(bomb)
+                elif goal_status == GoalStatus.PREEMPTED:
+                    print "{}: Defuse cancelled before completion.".format(self._name)
                 else:
                     print "{}: Defuse failed with status {!r}.".format(self._name, goal_status)
 
