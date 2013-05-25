@@ -12,6 +12,7 @@ import rospy
 from threading import Lock
 
 import numpy
+import time, logging
 
 from std_msgs.msg import String
 from geometry_msgs.msg import PoseStamped
@@ -46,6 +47,11 @@ class poseHandler:
         # Subscribe to location and pose updates
         rospy.Subscriber(self.POSE_TOPIC, PoseStamped, self.set_pose)
         rospy.Subscriber(self.LOCATION_TOPIC, String, self.set_location)
+
+        # Wait for first location message
+        logging.debug("Waiting for first location message...")
+        while not self._location:
+            time.sleep(0.1)
 
     def getPose(self, cached=True):  # pylint: disable=W0613
         """Return the last reported pose.

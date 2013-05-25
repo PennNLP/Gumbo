@@ -24,6 +24,7 @@ import re
 from threading import RLock
 
 import numpy
+import logging
 
 from fiducial_msgs.msg import FiducialScanStamped
 
@@ -57,7 +58,7 @@ class sensorHandler(object):
         self._fake_sensed = set()
         self._sensor_lock = RLock()
 
-        self._last_region = None  # keep track of region we were in when last polled
+        self._last_region = self._pose_handler.get_location()  # keep track of region we were in when last polled
 
     def _set_sensors(self, msg):
         """Reads current sensor status from the robot."""
