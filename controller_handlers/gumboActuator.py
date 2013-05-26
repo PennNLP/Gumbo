@@ -24,6 +24,7 @@ class gumboActuatorHandler(object):
     def __init__(self, proj, shared_data):  # pylint: disable=W0613
         self._name = type(self).__name__
         self._sensor_handler = proj.h_instance['sensor'][proj.currentConfig.main_robot]
+        self._pose_handler = proj.h_instance['pose']
 
         # Sweep
         self._sweep_client = None
@@ -32,6 +33,8 @@ class gumboActuatorHandler(object):
         # Defuse
         self._defuse_client = None
         self._defuse_goal = None
+
+        self.executor = proj.executor
 
     def sweep(self, actuatorVal, initial=False):
         """Perform a search of the current room."""
@@ -45,6 +48,7 @@ class gumboActuatorHandler(object):
         actuatorVal = _normalize(actuatorVal)
         if actuatorVal:
             print "{}: Activating sweep.".format(self._name)
+            self.executor.postEvent("MESSAGE", "Searching the {}...".format(self._pose_handler.get_location()))
             self._sweep_goal = SweepAreaGoal()
             self._sweep_goal.timeout = 0.0  # Never timeout
             self._sweep_goal.wall_dist = SWEEP_WALL_DISTANCE
@@ -56,6 +60,7 @@ class gumboActuatorHandler(object):
                 """Set sweep_done sensor when sweep is complete."""
                 if goal_status == GoalStatus.SUCCEEDED:
                     print "{}: Sweep succeeded.".format(self._name)
+                    self.executor.postEvent("MESSAGE", "Search complete.")
                     self._sensor_handler.set_action_done("sweep", True)
                 elif goal_status == GoalStatus.PREEMPTED:
                     print "{}: Sweep cancelled before completion.".format(self._name)
@@ -96,6 +101,8 @@ class gumboActuatorHandler(object):
             bomb_position = bomb.pose.position
             self._defuse_goal.target_pose = Pose(position=bomb_position)
 
+            self.executor.postEvent("MESSAGE", "Defusing...")
+
             # Sneakily define a lexically enclosed callback
             def _complete_defuse(goal_status, goal_result):  # pylint: disable=W0613
                 """Wait until bomb is defused and then remove it from the sensors."""
@@ -105,6 +112,7 @@ class gumboActuatorHandler(object):
                     print "{}: Defusing bomb...".format(self._name)
                     rospy.sleep(DEFUSE_TIME)
                     print "{}: Bomb defusing complete.".format(self._name)
+                    self.executor.postEvent("MESSAGE", "Successfully defused.")
                     self._sensor_handler.disable_item(bomb)
                 elif goal_status == GoalStatus.PREEMPTED:
                     print "{}: Defuse cancelled before completion.".format(self._name)
